@@ -27,8 +27,8 @@
 ;; You need mod_notionflux-3 (at least from 2005-04-21)
 ;; mod_notionflux-3 can be found here: http://modeemi.fi/~tuomov/repos/
 
-;; Put the following in your .emacs to make the gnome-shell-mode function available:
-;; (autoload 'gnome-shell-mode "notion" "Major mode to edit notion config files" t)
+;; Put the following in your .emacs to make the scrollwm-mode function available:
+;; (autoload 'scrollwm-mode "notion" "Major mode to edit notion config files" t)
 
 ;; The latest version of notion.el can be found at http://www.xsteve.at/prg/emacs/notion.el
 
@@ -47,17 +47,17 @@
 ;; notion interaction via notionflux
 ;; --------------------------------------------------------------------------------
 
-(defvar gnome-shell-display-target ":0"
+(defvar scrollwm-display-target ":0"
   "The DISPLAY to target. Useful when debugging a separate notion in eg. a Xephyr server")
 
-(defconst gnome-shell--helper-path
+(defconst scrollwm--helper-path
   (concat (file-name-directory (or load-file-name buffer-file-name))
           "emacs.js"))
 
-(defconst gnome-shell-documentation-url
+(defconst scrollwm-documentation-url
   "http://notion.sourceforge.net/notionconf/")
 
-(defun gnome-shell--name-at-point ()
+(defun scrollwm--name-at-point ()
   "Get current Name { ['.'|':'} Name } sequence."
   ;; Taken from lua-mode.el
   ;; NB: copying/modifying syntax table for each call may incur a penalty
@@ -66,10 +66,10 @@
     (modify-syntax-entry ?: "_")
     (current-word t)))
 
-(defun gnome-shell-run-interactively (cmd insert-result show-result)
+(defun scrollwm-run-interactively (cmd insert-result show-result)
   "Helper that handles common options relevant for interactive commands"
 
-  (let ((result (gnome-shell-run cmd)))
+  (let ((result (scrollwm-run cmd)))
 
     (when insert-result
       (save-excursion
@@ -93,14 +93,14 @@
 
     result))
 
-(defun gnome-shell-run (cmd)
-  (unless (car (gnome-shell--run "emacs"))
+(defun scrollwm-run (cmd)
+  (unless (car (scrollwm--run "emacs"))
     ;; send init code
     (with-temp-buffer
-      (insert-file-contents gnome-shell--helper-path)
-      (gnome-shell--run (buffer-string))))
+      (insert-file-contents scrollwm--helper-path)
+      (scrollwm--run (buffer-string))))
 
-  (let* ((response (gnome-shell--run cmd))
+  (let* ((response (scrollwm--run cmd))
          (success (car response))
          (result (cadr response)))
 
@@ -108,27 +108,27 @@
         (pp-to-string success)
       result)))
 
-(defun gnome-shell--run (cmd)
-  (dbus-call-method :session "org.gnome.Shell" "/org/gnome/Shell"
-                    "org.gnome.Shell" "Eval" cmd))
+(defun scrollwm--run (cmd)
+  (dbus-call-method :session "org.scrollwm.Shell" "/org/scrollwm/Shell"
+                    "org.scrollwm.Shell" "Eval" cmd))
 
-(defun gnome-shell-send-string (str)
+(defun scrollwm-send-string (str)
   "Send STR to notion, using the notionflux program."
-  (gnome-shell-run str))
+  (scrollwm-run str))
 
-(defun gnome-shell-send-region (start end &optional insert-result)
+(defun scrollwm-send-region (start end &optional insert-result)
   "Send send the region to notion, using the notionflux program."
   (interactive "r\nP")
-  (gnome-shell-run-interactively (buffer-substring start end)
+  (scrollwm-run-interactively (buffer-substring start end)
                                           insert-result (called-interactively-p)))
 
-(defun gnome-shell-send-current-line (&optional insert-result)
+(defun scrollwm-send-current-line (&optional insert-result)
   "Send send the actual line to notion, using the notionflux program."
   (interactive "P")
-  (gnome-shell-run-interactively (buffer-substring (line-beginning-position) (line-end-position))
+  (scrollwm-run-interactively (buffer-substring (line-beginning-position) (line-end-position))
                                           insert-result (called-interactively-p)))
 
-(defun gnome-shell-repl ()
+(defun scrollwm-repl ()
   (interactive)
   (let (a b)
     (if (region-active-p)
@@ -151,10 +151,10 @@
 
         (beginning-of-line)
         
-        (gnome-shell-run-interactively cmd t nil))
+        (scrollwm-run-interactively cmd t nil))
       )))
 
-(defun gnome-shell-send-proc ()
+(defun scrollwm-send-proc ()
   "Send proc around point to notion."
   (interactive)
   (let (start end)
@@ -163,53 +163,53 @@
       (setq start (point))
       (lua-end-of-proc)
       (setq end (point)))
-    (gnome-shell-send-region start end)))
+    (scrollwm-send-region start end)))
 
-(defun gnome-shell-send-buffer ()
+(defun scrollwm-send-buffer ()
   "Send send the buffer content to notion, using the notionflux program."
   (interactive)
-  (gnome-shell-send-region (point-min) (point-max)))
+  (scrollwm-send-region (point-min) (point-max)))
 
 
-(defun gnome-shell-cmd (cmd &optional insert-result)
+(defun scrollwm-cmd (cmd &optional insert-result)
   "Send a command to notion.
 The command is prefixed by a return statement."
   (interactive "sNotion cmd: \nP")
-  (gnome-shell-run-interactively cmd insert-result (called-interactively-p)))
+  (scrollwm-run-interactively cmd insert-result (called-interactively-p)))
 
 
 ;; --------------------------------------------------------------------------------
-;; Utility functions that need gnome-shell-emacs.lua
+;; Utility functions that need scrollwm-emacs.lua
 ;; --------------------------------------------------------------------------------
 
-(defun gnome-shell-client-list ()
+(defun scrollwm-client-list ()
   "Return the list of the notion clients."
-  (let* ((s (gnome-shell-cmd "emacs.list_clients()"))
+  (let* ((s (scrollwm-cmd "emacs.list_clients()"))
          (s0 (substring s 1 (- (length s) 2)))
          (client-list (split-string s0 "\\\\\n")))
     client-list))
 
 
-;; (ido-completing-read "notion window: " (gnome-shell-client-list) t t nil nil (car (gnome-shell-client-list)))
+;; (ido-completing-read "notion window: " (scrollwm-client-list) t t nil nil (car (scrollwm-client-list)))
 
-(defun gnome-shell-goto-client (name)
+(defun scrollwm-goto-client (name)
   ;;(interactive (list (ido-completing-read "select: " '("a" "aaab" "a/b" "a/b/c" "x/z"))))
-  (interactive (list (ido-completing-read "select: " (gnome-shell-client-list))))
-  (gnome-shell-send-string (concat "WRegion.goto(ioncore.lookup_clientwin(\"" name "\"))")))
+  (interactive (list (ido-completing-read "select: " (scrollwm-client-list))))
+  (scrollwm-send-string (concat "WRegion.goto(ioncore.lookup_clientwin(\"" name "\"))")))
 
-(defun gnome-shell-look-up-function-at-point ()
+(defun scrollwm-look-up-function-at-point ()
   (interactive)
   ;; Documentation still uses ioncore instead of notioncore
   (let* ((funcname (replace-regexp-in-string "^notioncore\\." "ioncore."
-                                             (gnome-shell--name-at-point)))
+                                             (scrollwm--name-at-point)))
          (lua-req (format "return emacs.canonical_funcname(\"%s\")" funcname))
-         (canonical-funcname (read (gnome-shell-send-string lua-req))) ;; CLEANUP
-         (url (concat gnome-shell-documentation-url
+         (canonical-funcname (read (scrollwm-send-string lua-req))) ;; CLEANUP
+         (url (concat scrollwm-documentation-url
                       "node7.html#fn:" canonical-funcname)))
     (browse-url url))
   )
 
-(defun gnome-shell--resolve-lua-source-file (relative-path)
+(defun scrollwm--resolve-lua-source-file (relative-path)
   ;; Byte compiled lua files contain file _name_ at best
   (let* ((candidates
           (remove-if-not (lambda (project-file-path)
@@ -222,10 +222,10 @@ The command is prefixed by a return statement."
         (concat (projectile-project-root) project-file)
       (helm-find-files-1 relative-path))))
 
-(defun gnome-shell-goto-definition (function-name)
-  (interactive (list (gnome-shell--name-at-point)))
+(defun scrollwm-goto-definition (function-name)
+  (interactive (list (scrollwm--name-at-point)))
   ;; Hackety-hack...
-  (let* ((raw (gnome-shell-send-string (format "return emacs.defined_at(\"%s\")" function-name)))
+  (let* ((raw (scrollwm-send-string (format "return emacs.defined_at(\"%s\")" function-name)))
          (as-string (and raw (read raw)))
          (location (and as-string (read as-string))))
 
@@ -234,7 +234,7 @@ The command is prefixed by a return statement."
              (line-number   (cadr location))
              (resolved-path (if (file-name-absolute-p path)
                                 path
-                              (gnome-shell--resolve-lua-source-file path))))
+                              (scrollwm--resolve-lua-source-file path))))
         (when resolved-path
           (find-file resolved-path)
           (goto-line line-number)
@@ -244,57 +244,57 @@ The command is prefixed by a return statement."
 ;; The notion edit mode, based on lua mode
 ;; --------------------------------------------------------------------------------
 
-(defvar gnome-shell-mode-map () "Keymap used in `gnome-shell-mode' buffers.")
+(defvar scrollwm-mode-map () "Keymap used in `scrollwm-mode' buffers.")
 
-(when (not gnome-shell-mode-map)
-  (setq gnome-shell-mode-map (make-sparse-keymap))
-  (define-key gnome-shell-mode-map [(control ?c) (control ?p)] 'gnome-shell-send-proc)
-  (define-key gnome-shell-mode-map [(control ?c) (control ?r)] 'gnome-shell-send-region)
-  (define-key gnome-shell-mode-map [(control ?c) (control ?b)] 'gnome-shell-send-buffer)
-  (define-key gnome-shell-mode-map [(control ?c) (control ?l)] 'gnome-shell-send-line)
-  (define-key gnome-shell-mode-map (kbd "C-<return>") 'gnome-shell-repl)
+(when (not scrollwm-mode-map)
+  (setq scrollwm-mode-map (make-sparse-keymap))
+  (define-key scrollwm-mode-map [(control ?c) (control ?p)] 'scrollwm-send-proc)
+  (define-key scrollwm-mode-map [(control ?c) (control ?r)] 'scrollwm-send-region)
+  (define-key scrollwm-mode-map [(control ?c) (control ?b)] 'scrollwm-send-buffer)
+  (define-key scrollwm-mode-map [(control ?c) (control ?l)] 'scrollwm-send-line)
+  (define-key scrollwm-mode-map (kbd "C-<return>") 'scrollwm-repl)
   )
 
-(easy-menu-define gnome-shell-mode-menu gnome-shell-mode-map
-"'gnome-shell-mode' menu"
+(easy-menu-define scrollwm-mode-menu scrollwm-mode-map
+"'scrollwm-mode' menu"
                   '("Notion"
                     ("Interaction"
-                    ["Send Procedure" gnome-shell-send-proc t]
-                    ["Send Region" gnome-shell-send-region t]
-                    ["Send Buffer" gnome-shell-send-buffer t]
-                    ["Send String" gnome-shell-send-string t]
-                    ["Send Line" gnome-shell-send-line t]
+                    ["Send Procedure" scrollwm-send-proc t]
+                    ["Send Region" scrollwm-send-region t]
+                    ["Send Buffer" scrollwm-send-buffer t]
+                    ["Send String" scrollwm-send-string t]
+                    ["Send Line" scrollwm-send-line t]
                     )
-                    ["Goto client" gnome-shell-goto-client t]
+                    ["Goto client" scrollwm-goto-client t]
                     ))
 
-(define-derived-mode gnome-shell-mode js2-mode "gnome-shell"
-  "gnome-shell-mode provides a tight integration of emacs and gnome-shell.
+(define-derived-mode scrollwm-mode js2-mode "scrollwm"
+  "scrollwm-mode provides a tight integration of emacs and scrollwm.
 "
-  (use-local-map gnome-shell-mode-map))
+  (use-local-map scrollwm-mode-map))
 
 ;; --------------------------------------------------------------------------------
 ;; various stuff for testing purposes
 ;; --------------------------------------------------------------------------------
 
 
-;; (gnome-shell-send-string "ioncore.goto_next_screen()")
-;; (gnome-shell-cmd "ioncore.goto_next_screen()")
+;; (scrollwm-send-string "ioncore.goto_next_screen()")
+;; (scrollwm-cmd "ioncore.goto_next_screen()")
 
-;;(defun gnome-shell-show-message-for-cmd (cmd)
+;;(defun scrollwm-show-message-for-cmd (cmd)
 ;;  (interactive "snotion command: ")
-;;  (gnome-shell-run (concat "mod_query.message(ioncore.find_screen_id(0)," cmd ")")))
+;;  (scrollwm-run (concat "mod_query.message(ioncore.find_screen_id(0)," cmd ")")))
 
 
-;; (gnome-shell-client-list)
+;; (scrollwm-client-list)
 
 
-;; (gnome-shell-show-message-for-cmd "ioncore.version()")
-;; (gnome-shell-send-string "return ioncore.version()")
-;; (gnome-shell-send-string "return 4+5")
+;; (scrollwm-show-message-for-cmd "ioncore.version()")
+;; (scrollwm-send-string "return ioncore.version()")
+;; (scrollwm-send-string "return 4+5")
 
-;; (gnome-shell-cmd "ioncore.version()")
-;; (gnome-shell-cmd "4+5")
+;; (scrollwm-cmd "ioncore.version()")
+;; (scrollwm-cmd "4+5")
 
  ;; (setenv "NOTIONFLUX_SOCKET" "/tmp/fileM5J57y")
 
@@ -305,7 +305,7 @@ The command is prefixed by a return statement."
 
 ;; bool WRegion.goto(WRegion reg)
 
-(provide 'gnome-shell-mode)
+(provide 'scrollwm-mode)
 
 ;;; notion.el ends here
 

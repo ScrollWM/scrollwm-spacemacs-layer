@@ -1,17 +1,17 @@
 
 
-(defun company-gnome-shell--candidates ()
+(defun company-scrollwm--candidates ()
   "Candidates handler for the company backend."
   (cons :async
         (lambda (cb)
-          (let* ((context (gnome-shell--name-at-point))
-                 (raw-result (gnome-shell-cmd
+          (let* ((context (scrollwm--name-at-point))
+                 (raw-result (scrollwm-cmd
                               (format "emacs.completion_candidates(\"%s\")" context)))
                  (result (split-string raw-result ",")))
 
             (funcall cb result)))))
 
-(defun company-gnome-shell--prefix ()
+(defun company-scrollwm--prefix ()
   (unless (company-in-string-or-comment)
     ;; Trigger completion at once if the immediate left char is '.' or ':'
     ;; (ignoring company-minimum-prefix-length).
@@ -19,13 +19,13 @@
     (or (company-grab-symbol-cons "[.:]" 1)
         'stop)))
 
-(defun company-gnome-shell (command &optional arg &rest ignored)
+(defun company-scrollwm (command &optional arg &rest ignored)
   (interactive (list 'interactive))
   (cl-case command
-    (interactive (company-begin-backend 'company-gnome-shell))
-    (prefix (company-gnome-shell--prefix))
-    (candidates (company-gnome-shell--candidates))
+    (interactive (company-begin-backend 'company-scrollwm))
+    (prefix (company-scrollwm--prefix))
+    (candidates (company-scrollwm--candidates))
     (duplicates t)
     (sorted nil)))
 
-(provide 'company-gnome-shell)
+(provide 'company-scrollwm)
